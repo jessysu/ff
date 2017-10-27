@@ -9,39 +9,71 @@
 
 {% block body %}
 
+{% regroup symbol_line by symbol as country_list %}
+
 <div class="container">
-    <h1>Hello</h1>
+{% if symbol_list %}
+    <h1>OK, here's what happened.</h1>
+    <h3>From {{ds}} to {{de}}</h3>
+    <table class="table table-hover" style="margin-bottom:100px">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Symbol</th>
+                <th>Performance</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in symbol_list %}
+            <tr>
+                <td>{{r.rn|floatformat:"0"}}</td>
+                <td>{{r.symbol}}</td>
+                <td>{{r.c_diff|floatformat:"0"}}%</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+    <h1>Hindsight</h1>
     <form action="/" method="post">
     {% csrf_token %}
-    <div class='col-md-2 col-sm-3 col-xs-4'>
-        <div class="form-group">
-            <div class='input-group date' id='datetimepicker6'>
-                <input type='text' class="form-control" name="ds" />
-                <span class="input-group-addon">
-                    <span class="glyphicon glyphicon-calendar"></span>
-                </span>
+        <div class="row">
+            <div class="form-group col-md-3 col-sm-4 col-xs-6">
+                <label for="ds">Month you bought</label>
+                <div class='input-group date' id='datetimepicker6'>
+                    <input type='text' class="form-control" name="ds" {%if ds%}value="{{ds}}"{%else%}placeholder="MM/YYYY"{%endif%} />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group col-md-3 col-sm-4 col-xs-6">
+                <label for="de">Month you sold</label>
+                <div class='input-group date' id='datetimepicker7'>
+                    <input type='text' class="form-control" name="de" {%if de%}value="{{de}}"{%else%}placeholder="MM/YYYY"{%endif%} />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group col-md-3 col-sm-4 col-xs-6">
+                <label for="ss">Which stock from SP500</label>
+                <input type='text' class="form-control" name="ss" {%if ss%}value="{{ss}}"{%else%}placeholder="SYMBOL"{%endif%} />
             </div>
         </div>
-    </div>
-    <div class='col-md-2 col-sm-3 col-xs-4'>
-        <div class="form-group">
-            <div class='input-group date' id='datetimepicker7'>
-                <input type='text' class="form-control" name="de" />
-                <span class="input-group-addon">
-                    <span class="glyphicon glyphicon-calendar"></span>
-                </span>
+        <div class="row">
+            <div class="col-md-3 col-sm-4 col-xs-6">
+                <button type="submit" class="btn btn-default">Check</button>
             </div>
         </div>
-    </div>
-    <div>
-        <button type="submit" class="btn btn-default">Check</button>
-    </div>
     </form>
     <script type="text/javascript">
     $(function () {
         $('#datetimepicker6').datetimepicker({
             viewMode: 'years',
-            format: 'MM/YYYY'
+            format: 'MM/YYYY',
+            minDate: moment('11/2002','MM/YYYY')
         });
         $('#datetimepicker7').datetimepicker({
             viewMode: 'years',
