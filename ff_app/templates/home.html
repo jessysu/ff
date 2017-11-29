@@ -2,14 +2,17 @@
 
 
 {% block header %}
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.css">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
+        <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.1/moment-with-locales.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
 {% endblock header %}
 
 {% block body %}
 
-{% regroup symbol_line by symbol as country_list %}
+{% regroup symbol_line|dictsort:"symbol" by symbol as line_list %}
 
 <div class="container">
 {% if symbol_list %}
@@ -33,9 +36,52 @@
         {% endfor %}
         </tbody>
     </table>
+    <h3>&nbsp;</h3>
+    <div id="sline" style="height:480px;width:80%;min-width:480px">
+        <svg></svg>
+    </div>
+<script>
+nv.addGraph(function() {
+	  var chart = nv.models.lineChart()
+	    .useInteractiveGuideline(true)
+	    ;
+
+	  chart.xAxis
+	    .axisLabel('Date')
+	    .tickFormat(function(d){return d3.time.format('%m/%d/%Y')(new Date(d))})
+	    ;
+
+	  chart.yAxis
+	    .axisLabel('Gain (%)')
+	    .tickFormat(d3.format('.02f'))
+	    ;
+
+	  d3.select('#sline svg')
+	    .datum(data_sline)
+	    .transition().duration(500)
+	    .call(chart)
+	    ;
+
+	  nv.utils.windowResize(chart.update);
+
+	  return chart;
+	});
+var data_sline = [
+	{% for s in line_list %}
+	{
+		key:'{{s.grouper}}',
+		values:[{% for p in s.list %}
+			{x:{{p.close_date}} , y:{{p.gp}} },
+		{% endfor %}]
+	},
+	{% endfor %}
+];
+</script>
 {% endif %}
 
     <h1>Hindsight</h1>
+    <h4>Makes you regret&trade;</h4>
+    <h1>&nbsp;</h1>
     <form action="/" method="post">
     {% csrf_token %}
         <div class="row">

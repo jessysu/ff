@@ -1,5 +1,5 @@
 
-import re, datetime
+import re, datetime, time
 from django.db import connection
 #from django.http import HttpResponse
 from django.shortcuts import render
@@ -29,9 +29,6 @@ def index(request):
     rs = {}
     
     r = re.compile('\d{2}/\d{4}')
-    print("ds = " + ds)
-    print("de = " + de)
-    print("ss = " + ss)
     if not ds or not de or not ss or len(ss)>5:
         print("lacks info")
         return render(request, 'home.html', rs)
@@ -60,12 +57,14 @@ def index(request):
               union \
               select rn+1 rn, symbol, round(c_diff*100) c_diff from ff_stock_w3 where start_month='"+_ds+"' and end_month='"+_de+"' and symbol='"+ss+"'"
     symbol_list = runsql(rawsql)
-    rawsql = "select a.*, c_min, round((close-c_min)/c_min*100) gp, rn from ff_stock a, ff_stock_w2 c, \
+    rawsql = "select a.*, c_min, round((close-c_min)/c_min*100,2) gp, rn from ff_stock a, ff_stock_w2 c, \
               (select a.* from (select rn, symbol from ff_stock_w3 where start_month='"+_ds+"' and end_month='"+_de+"' order by rn limit 10) a union \
               select rn, symbol from ff_stock_w3 where start_month='"+_ds+"' and end_month='"+_de+"' and symbol='"+ss+"' \
               ) b where a.symbol=b.symbol and DATE_FORMAT(a.close_date, '%Y%m') >= '"+_ds+"' and DATE_FORMAT(a.close_date, '%Y%m') <= '"+_de+"' \
               and b.symbol=c.symbol and c.close_month = '"+_ds+"'"
     symbol_line = runsql(rawsql)
+    for s in symbol_line:
+        s['close_date'] = 1000*time.mktime(s['close_date'].timetuple())
     rs = {"ds": ds, "de": de, "ss": ss, "symbol_list": symbol_list, "symbol_line": symbol_line}
     return render(request, 'home.html', rs)
     
