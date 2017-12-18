@@ -18,7 +18,7 @@
 
 <div class="container">
     <h1>Hindsight <small><small>Makes you regret&trade;</small></small></h1>
-    <h5>Monthly stock performance since 2000</h5>
+    <h5>Major stock performance for the past 3 months</h5>
 {% if symbol_list %}
     <h1>&nbsp;</h1>
     <div class="pull-right col-xs-4 col-sm-3">
@@ -26,11 +26,7 @@
             <div class="panel-heading" style="text-align:center">{{pr}}</div>
         </h1>
     </div>
-    <h4 style="padding-top:30px">
-        Between <u>{%if sy and ds != de%}{{es|date:"F"}}{%else%}{{es|date:"F Y"}}{%endif%}</u>{%if ds != de%}
-        and <u>{{ee|date:"F Y"}}</u>{%endif%}, 
-        the performance of <b>{{ss}}</b> was ranked
-    </h4>
+    <h4 style="padding-top:30px">Between <u>{{ds}}</u>{%if ds != de%} and <u>{{de}}</u>{%endif%}, the performance of <b>{{ss}}</b> was ranked</h4>
     <h1>&nbsp;</h1>
     <h1>&nbsp;</h1>
     <h4>Some <span class="btn btn-primary">A+</span> ticks at that time are</h4>
@@ -106,22 +102,22 @@ var data_sline = [
 {% endif %}
 
     <h1>&nbsp;</h1>
-    <form action="/" method="post">
+    <form action="/hsd/" method="post">
     {% csrf_token %}
         <div class="row">
             <div class="form-group col-md-3 col-sm-6 col-xs-12">
-                <label for="ds">Month you bought</label>
+                <label for="ds">Date you bought</label>
                 <div class='input-group date' id='datetimepicker6'>
-                    <input type='text' class="form-control" name="ds" {%if ds%}value="{{ds}}"{%else%}placeholder="MM/YYYY"{%endif%} />
+                    <input type='text' class="form-control" name="ds" {%if ds%}value="{{ds}}"{%else%}placeholder="MM/DD/YYYY"{%endif%} />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
                     </span>
                 </div>
             </div>
             <div class="form-group col-md-3 col-sm-6 col-xs-12">
-                <label for="de">Month you sold</label>
+                <label for="de">Date you sold</label>
                 <div class='input-group date' id='datetimepicker7'>
-                    <input type='text' class="form-control" name="de" {%if de%}value="{{de}}"{%else%}placeholder="MM/YYYY"{%endif%} />
+                    <input type='text' class="form-control" name="de" {%if de%}value="{{de}}"{%else%}placeholder="MM/DD/YYYY"{%endif%} />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
                     </span>
@@ -129,7 +125,7 @@ var data_sline = [
             </div>
             <div class="form-group col-md-3 col-sm-6 col-xs-12">
                 <label for="ss">Which stock from SP500</label>
-                <input type='text' class="form-control typeahead" autocomplete="off" name="ss" data-provide="typeahead" {%if ss%}value="{{ss}}"{%else%}placeholder="SYMBOL"{%endif%} onfocus="this.setSelectionRange(0, this.value.length)"/>
+                <input type='text' class="form-control typeahead" autocomplete="off" name="ss" data-provide="typeahead" {%if ss%}value="{{ss}}"{%else%}placeholder="SYMBOL"{%endif%} onfocus="this.setSelectionRange(0, this.value.length)" />
             </div>
         </div>
         <div class="row">
@@ -141,18 +137,19 @@ var data_sline = [
     <script type="text/javascript">
     $(function () {
         $('#datetimepicker6').datetimepicker({
-            viewMode: 'years',
-            format: 'MM/YYYY',
-            minDate: moment('11/2002','MM/YYYY'),
-            maxDate: moment('{{SmaxD}}','MM/YYYY'),
+            viewMode: 'months',
+            format: 'MM/DD/YYYY',
+            minDate: moment('{{SminD}}','MM/DD/YYYY'),
+            maxDate: moment('{{SmaxD}}','MM/DD/YYYY'),
+            daysOfWeekDisabled: [0, 6],
             useCurrent: false //Important! See issue #1075
         });
         $('#datetimepicker7').datetimepicker({
-            viewMode: 'years',
-            format: 'MM/YYYY',
-            minDate: moment('{{EminD}}','MM/YYYY'),
-            //maxDate: moment(('0' + ((new Date()).getMonth()+1)).slice(-2)+'/'+(new Date()).getFullYear(),'MM/YYYY'),
-            maxDate: moment('{{EmaxD}}','MM/YYYY'),
+            viewMode: 'months',
+            format: 'MM/DD/YYYY',
+            minDate: moment('{{EminD}}','MM/DD/YYYY'),
+            maxDate: moment('{{EmaxD}}','MM/DD/YYYY'),
+            daysOfWeekDisabled: [0, 6],
             useCurrent: false //Important! See issue #1075
         });
         $("#datetimepicker6").on("dp.change", function (e) {
@@ -163,15 +160,15 @@ var data_sline = [
         });
     });
     var numbers = new Bloodhound({
-    	  datumTokenizer: Bloodhound.tokenizers.whitespace,
-    	  queryTokenizer: Bloodhound.tokenizers.whitespace,
-    	  local:  [{%for s in SP500%}"{{s}}",{%endfor%}]
-    	});
-   	numbers.initialize();
-   	$(".typeahead").typeahead({
-   	  items: 9,
-   	  source:numbers.ttAdapter()
-   	});
+  	  datumTokenizer: Bloodhound.tokenizers.whitespace,
+  	  queryTokenizer: Bloodhound.tokenizers.whitespace,
+  	  local:  [{%for s in SP500%}"{{s}}",{%endfor%}]
+  	});
+ 	numbers.initialize();
+ 	$(".typeahead").typeahead({
+ 	  items: 9,
+ 	  source:numbers.ttAdapter()
+ 	});
     </script>
     <h1>&nbsp;</h1><h1>&nbsp;</h1><h1>&nbsp;</h1><h1>&nbsp;</h1>
 </div>
