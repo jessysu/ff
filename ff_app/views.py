@@ -55,12 +55,12 @@ def index(request):
     ds = request.POST.get('ds', '')
     de = request.POST.get('de', '')
     ss = request.POST.get('ss', '').upper()
-    maxD = datetime.datetime.now() - datetime.timedelta(days=1)
+    maxD = datetime.datetime.now() - datetime.timedelta(hours=19)
     if maxD.weekday()>4:
         maxD -= datetime.timedelta(days=1)
         if maxD.weekday()>4:
             maxD -= datetime.timedelta(days=1)
-    rs = {"SminD":"11/2002", "EminD":"11/2002", "SmaxD":maxD.strftime("%m/%Y"), "EmaxD":maxD.strftime("%m/%Y")}
+    rs = {"SminD":"11/2002", "EminD":"11/2002", "SmaxD":maxD.strftime("%m/%Y"), "EmaxD":maxD.strftime("%m/%Y"), "SP500":SP500}
 
     r = re.compile('\d{2}/\d{4}')
     if not ds or not de or not ss or len(ss)>5:
@@ -108,7 +108,7 @@ def index(request):
     symbol_line = runsql(rawsql)
     for s in symbol_line:
         s['close_date'] = 1000*time.mktime(s['close_date'].timetuple())
-    rs_ = {"ds": ds, "de": de, "ss": ss, "symbol_list": symbol_list, "symbol_line": symbol_line, "pr":pr, "SP500":SP500}
+    rs_ = {"ds": ds, "de": de, "ss": ss, "symbol_list": symbol_list, "symbol_line": symbol_line, "pr":pr}
     return render(request, 'home.html', {**rs,**rs_,**rs__})
     
 
@@ -119,13 +119,13 @@ def hindsight_daily(request):
     ds = request.POST.get('ds', '')
     de = request.POST.get('de', '')
     ss = request.POST.get('ss', '').upper()
-    maxD = datetime.datetime.now() - datetime.timedelta(days=1)
+    maxD = datetime.datetime.now() - datetime.timedelta(hours=19)
     if maxD.weekday()>4:
         maxD -= datetime.timedelta(days=1)
         if maxD.weekday()>4:
             maxD -= datetime.timedelta(days=1)
     minD = datetime.datetime.now()-datetime.timedelta(days=90)
-    rs = {"SminD":minD.strftime("%m/%d/%Y"), "EminD":minD.strftime("%m/%d/%Y"), "SmaxD":maxD.strftime("%m/%d/%Y"), "EmaxD":maxD.strftime("%m/%d/%Y")}
+    rs = {"SminD":minD.strftime("%m/%d/%Y"), "EminD":minD.strftime("%m/%d/%Y"), "SmaxD":maxD.strftime("%m/%d/%Y"), "EmaxD":maxD.strftime("%m/%d/%Y"), "SP500":SP500}
     
     r = re.compile('\d{2}/\d{2}/\d{4}')
     if not ds or not de or not ss or len(ss)>5:
@@ -168,5 +168,5 @@ def hindsight_daily(request):
     symbol_line = runsql(rawsql)
     for s in symbol_line:
         s['close_date'] = 1000*time.mktime(s['close_date'].timetuple())
-    rs_ = {"ds": ds, "de": de, "ss": ss, "symbol_list": symbol_list, "symbol_line": symbol_line, "pr":pr, "SP500":SP500}
+    rs_ = {"ds": ds, "de": de, "ss": ss, "symbol_list": symbol_list, "symbol_line": symbol_line, "pr":pr}
     return render(request, 'hindsight_daily.html', {**rs,**rs_})

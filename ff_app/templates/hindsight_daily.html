@@ -18,7 +18,9 @@
 
 <div class="container">
     <h1>Hindsight <small><small>Makes you regret&trade;</small></small></h1>
-    <h5>Major stock performance for the past 3 months</h5>
+    <h5>It does not tell you what to buy. It tells what you have missed.</h5>
+    <h5>Check major stock performance for the past 3 months.</h5>
+    <h5>Or <a href="/hsd/">try longer range</a>.</h5>
 {% if symbol_list %}
     <h1>&nbsp;</h1>
     <div class="pull-right col-xs-4 col-sm-3">
@@ -150,7 +152,9 @@ var data_sline = [
             minDate: moment('{{EminD}}','MM/DD/YYYY'),
             maxDate: moment('{{EmaxD}}','MM/DD/YYYY'),
             daysOfWeekDisabled: [0, 6],
+            {% if ds %}
             useCurrent: false //Important! See issue #1075
+            {% endif %}
         });
         $("#datetimepicker6").on("dp.change", function (e) {
             $('#datetimepicker7').data("DateTimePicker").minDate(e.date);

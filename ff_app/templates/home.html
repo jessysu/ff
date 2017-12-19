@@ -18,7 +18,9 @@
 
 <div class="container">
     <h1>Hindsight <small><small>Makes you regret&trade;</small></small></h1>
-    <h5>Monthly stock performance since 2000</h5>
+    <h5>It does not tell you what to buy. It tells what you have missed.</h5>
+    <h5>Check monthly stock performance since 2000.</h5>
+    <h5>Or <a href="/hsd/">try daily</a>.</h5>
 {% if symbol_list %}
     <h1>&nbsp;</h1>
     <div class="pull-right col-xs-4 col-sm-3">
@@ -151,9 +153,10 @@ var data_sline = [
             viewMode: 'years',
             format: 'MM/YYYY',
             minDate: moment('{{EminD}}','MM/YYYY'),
-            //maxDate: moment(('0' + ((new Date()).getMonth()+1)).slice(-2)+'/'+(new Date()).getFullYear(),'MM/YYYY'),
             maxDate: moment('{{EmaxD}}','MM/YYYY'),
+            {% if ds %}
             useCurrent: false //Important! See issue #1075
+            {% endif %}
         });
         $("#datetimepicker6").on("dp.change", function (e) {
             $('#datetimepicker7').data("DateTimePicker").minDate(e.date);
