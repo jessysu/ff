@@ -7,13 +7,18 @@ Created on Sat Oct 14 21:19:08 2017
 
 #pip install pandas-datareader
 from pandas_datareader import data
+from pandas_datareader.google.daily import GoogleDailyReader
 import datetime, time
 
 from util_mysql import table_exist, runsql, runsqlmany, fetch_rawsql, dbcommit
 from get_sp500 import refresh_sp500
 
-
-
+### fix google url issue ##
+@property
+def url(self):
+    return 'http://finance.google.com/finance/historical'
+GoogleDailyReader.url = url
+############################
 
 FF_STOCK_ADJ_DDL = """create table ff_stock_adj (
 symbol varchar(10),
