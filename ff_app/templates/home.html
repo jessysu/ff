@@ -17,9 +17,8 @@
 {% regroup symbol_line|dictsort:"rn" by rn as line_list %}
 
 <div class="container">
-    <h1>Hindsight <small><small>Makes you regret&trade;</small></small></h1>
-    <h5>It does not tell you what to buy. It tells what you have missed.</h5>
-    <h5>Check monthly stock performance since 2000.</h5>
+    <h1>Hindsight <small><small>Best from the Past&trade;</small></small></h1>
+    <h5>Check monthly stock performance for the past 10 years!</h5>
     <h5>Or <a href="/hsd/">try daily</a>.</h5>
 {% if symbol_list %}
     <h1>&nbsp;</h1>
@@ -35,7 +34,7 @@
     </h4>
     <h1>&nbsp;</h1>
     <h1>&nbsp;</h1>
-    <h4>Some <span class="btn btn-primary">A+</span> ticks at that time are</h4>
+    <h4>Some <span class="btn btn-primary">A+</span> ticks at that time were</h4>
     <h3>&nbsp;</h3>
     <table class="table table-hover" style="margin-bottom:100px">
         <thead>
@@ -108,8 +107,7 @@ var data_sline = [
 {% endif %}
 
     <h1>&nbsp;</h1>
-    <form action="/" method="post">
-    {% csrf_token %}
+    <form action="/" method="get">
         <div class="row">
             <div class="form-group col-md-3 col-sm-6 col-xs-12">
                 <label for="ds">Month you bought</label>

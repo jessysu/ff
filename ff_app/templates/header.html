@@ -1,10 +1,13 @@
+{% load staticfiles %}
 <nav class="navbar navbar-inverse">
   <div class="container-fluid">
     <div class="navbar-header">
+      <a class="navbar-brand pull-left" style="padding:0px">
+          <img src="{% static 'img/favicon_b.png' %}" style="height:100%;padding:10px;width:auto"></a>
       <a class="navbar-brand" href="/">FolioFame</a>
     </div>
     <ul class="nav navbar-nav">
-      <li class="active"><a href="/">Home</a></li>
+      <li class="active"><a href="/"><img src="{% static 'img/hindsight.ico' %}"> Hindsight</a></li>
     </ul>
   </div>
 </nav>

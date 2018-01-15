@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+
+{% block header %}
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.css">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
+        <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.1/moment-with-locales.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+        <script src="//twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+{% endblock header %}
+
+{% block body %}
+
+<div class="container">
+    <h1>Hindsight <img src="{% static 'img/hindsight.ico' %}" style="height:30px;width:auto"> <small><small>Best from the Past&trade;</small></small></h1>
+
+    <h1>&nbsp;</h1>
+    <div class="pull-right col-xs-4 col-sm-3">
+        <h1 class="panel panel-info">
+            <div class="panel-heading" style="text-align:center">{{symbol_desc.pr}}</div>
+        </h1>
+    </div>
+    <h4 style="padding-top:30px">During the past <u>{{d}}</u> days, the performance of <b>{{ss}}</b> was ranked</h4>
+    <h1>&nbsp;</h1>
+    <h3>&nbsp;</h3>
+
+    <h4>Best time to own <b>{{ss}}</b> shares</h4>
+    <h6>&nbsp;</h6>
+    {% for r in best_times %}
+    <h5>
+        The best performance by <b>{{ss}}</b> for a period of
+        <b>{{r.best_val}}+ {%if r.best_unit == 'm'%}month{%else%}day{%endif%}s</b> was between 
+        {%if r.best_unit == 'm'%}<i>{%if r.same_year%}{{r.start|date:"F"}}{%else%}{{r.start|date:"F Y"}}{%endif%}</i> and <i>{{r.end|date:"F Y"}}</i>{%else%}  
+        <i>{%if r.same_year%}{{r.start|date:"N d"}}{%else%}{{r.start|date:"N d, Y"}}{%endif%}</i> and <i>{{r.end|date:"N d, Y"}}</i>{%endif%}.
+        During such period, the <b>{{ss}}</b> shares returned <b>{{r.c_diff}}%</b>  
+        and was ranked <span class="btn btn-xs btn-info">{{r.pr}}</span> among the S&P500 stocks.
+    </h5>
+    <div class="btn btn-sm btn-primary">Best stocks during 
+        {%if r.best_unit == 'm'%}<i>{%if r.same_year%}{{r.start|date:"F"}}{%else%}{{r.start|date:"F Y"}}{%endif%}</i> and <i>{{r.end|date:"F Y"}}</i>{%else%}  
+        <i>{%if r.same_year%}{{r.start|date:"N d"}}{%else%}{{r.start|date:"N d, Y"}}{%endif%}</i> and <i>{{r.end|date:"N d, Y"}}</i>{%endif%}.
+    </div>
+    <h5>&nbsp;</h5>
+    {% endfor %}
+    
+    <h3>&nbsp;</h3>
+    <div id="sline" style="height:480px;width:80%;min-width:480px">
+        <svg></svg>
+    </div>
+    <h1>&nbsp;</h1>
+    <h1>&nbsp;</h1>
+
+    <h4>Best performances by <b>{{ss}}</b></h4>
+    <h6>&nbsp;</h6>
+    <table class="table table-hover" style="margin-bottom:100px">
+        <thead>
+            <tr>
+                <th>In the past</th>
+                <th>Best period to own <b>{{ss}}</b></th>
+                <th>Performance rank</th>
+                <th>Best of this period</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in best_terms %}
+            <tr>
+                <td>{{r.base_val}} {%if r.base_unit == 'm'%}month{%else%}year{%endif%}{%if r.base_val > 1%}s{%endif%}</td>
+                <td> between
+                    {%if r.best_unit == 'm'%}<i>{%if r.same_year%}{{r.start|date:"F"}}{%else%}{{r.start|date:"F Y"}}{%endif%}</i> and <i>{{r.end|date:"F Y"}}</i>{%else%}
+                    <i>{%if r.same_year%}{{r.start|date:"N d"}}{%else%}{{r.start|date:"N d, Y"}}{%endif%}</i> and <i>{{r.end|date:"N d, Y"}}</i>{%endif%}
+                </td>
+                <td><span class="btn btn-sm btn-info">{{r.pr}}</span></td>
+                <td><span class="btn btn-sm btn-primary">Check</span></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h1>&nbsp;</h1>
+    <h1>&nbsp;</h1>
+<script>
+nv.addGraph(function() {
+    var chart = nv.models.linePlusBarChart()
+      .margin({top: 30, right: 60, bottom: 50, left: 70})
+      .color(d3.scale.category10().range())
+      ;
+
+    chart.xAxis
+      .showMaxMin(false)
+      .tickFormat(function(d){return d3.time.format('%m/%d/%Y')(new Date(d))});
+    chart.x2Axis
+      .showMaxMin(false)
+      .tickFormat(function(d){return d3.time.format('%m/%d/%Y')(new Date(d))});
+
+    chart.y1Axis.tickFormat(d3.format(',f'));
+    chart.y2Axis.tickFormat(function(d) { return '$' + d3.format(',f')(d) });
+    chart.bars.forceY([0]);
+
+    d3.select('#sline svg')
+      .datum(data_sline)
+      .transition().duration(500)
+      .call(chart)
+      ;
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+});
+
+var data_sline = [
+	{
+		key:'Volume',
+		bar: true,
+		values:[{% for p in symbol_line %}
+			{x:{{p.close_date|floatformat:"0"}} , y:{{p.volume}} },
+		{% endfor %}]
+	},
+	{
+		key:'Close',
+		values:[{% for p in symbol_line %}
+			{x:{{p.close_date|floatformat:"0"}} , y:{{p.close}} },
+		{% endfor %}]
+	},
+	{
+		key:'High',
+		values:[{% for p in symbol_line %}
+			{x:{{p.close_date|floatformat:"0"}} , y:{{p.high}} },
+		{% endfor %}]
+	},
+	{
+		key:'Low',
+		values:[{% for p in symbol_line %}
+			{x:{{p.close_date|floatformat:"0"}} , y:{{p.low}} },
+		{% endfor %}]
+	},
+];
+</script>
+</div>
+
+{% endblock body %}
