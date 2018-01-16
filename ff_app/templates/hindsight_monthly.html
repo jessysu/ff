@@ -21,6 +21,16 @@
     <h5>Check monthly stock performance for the past 10 years!</h5>
     <h5>Or <a href="/hsd/">try daily</a>.</h5>
 
+{% if messages %}
+    <h1>&nbsp;</h1>
+    {% for message in messages %}
+    <div class="alert alert-warning alert-dismissable">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        {{message|safe}}
+    </div>
+    {% endfor %}
+{% endif %}
+
 {% if pr %}
     <h1>&nbsp;</h1>
     <div class="pull-right col-xs-4 col-sm-3">
@@ -28,18 +38,20 @@
             <div class="panel-heading" style="text-align:center">{{pr}}</div>
         </h1>
     </div>
-    <h4 style="padding-top:30px">
+    <p style="padding-top:30px">
         Between <u>{%if sy and ds != de%}{{es|date:"F"}}{%else%}{{es|date:"F Y"}}{%endif%}</u>{%if ds != de%}
         and <u>{{ee|date:"F Y"}}</u>{%endif%}, 
         the performance of <b>{{ss}}</b> was ranked
-    </h4>
+    </p>
     <h1>&nbsp;</h1>
 {% endif %}
 
+    {% include "ranking_exp.html" %}
+
     <h1>&nbsp;</h1>
-    <h4>Some top <span class="btn btn-sm btn-info">A+</span> performers between <u>{%if sy and ds != de%}{{es|date:"F"}}{%else%}{{es|date:"F Y"}}{%endif%}</u>{%if ds != de%}
+    <p>Some top <span class="btn btn-xs btn-info">A+</span> performers between <u>{%if sy and ds != de%}{{es|date:"F"}}{%else%}{{es|date:"F Y"}}{%endif%}</u>{%if ds != de%}
         and <u>{{ee|date:"F Y"}}</u>{%endif%}:
-    </h4>
+    </p>
     <h3>&nbsp;</h3>
     <table class="table table-hover" style="margin-bottom:100px">
         <thead>
@@ -74,6 +86,15 @@
     <form action="/hsm/" method="get">
         <div class="row">
             <div class="form-group col-md-3 col-sm-6 col-xs-12">
+                <label for="ss">Which SP500 stock (optional)</label>
+                <input type='text' class="form-control typeahead" autocomplete="off" name="ss" id="ss" data-provide="typeahead" {%if ss%}value="{{ss}}"{%else%}placeholder="SYMBOL"{%endif%} onfocus="this.setSelectionRange(0, this.value.length)"/>
+            </div>
+        </div>
+        <div class="row">
+            <h4 class="col-xs-12">During the period </h4>
+        </div>
+        <div class="row">
+            <div class="form-group col-md-3 col-sm-6 col-xs-12">
                 <label for="ds">From which month (optional)</label>
                 <div class='input-group date' id='datetimepicker6'>
                     <input type='text' class="form-control" name="ds" {%if ds%}value="{{ds}}"{%else%}placeholder="MM/YYYY"{%endif%} />
@@ -91,18 +112,32 @@
                     </span>
                 </div>
             </div>
-            <div class="form-group col-md-3 col-sm-6 col-xs-12">
-                <label for="ss">Which SP500 stock (optional)</label>
-                <input type='text' class="form-control typeahead" autocomplete="off" name="ss" data-provide="typeahead" {%if ss%}value="{{ss}}"{%else%}placeholder="SYMBOL"{%endif%} onfocus="this.setSelectionRange(0, this.value.length)"/>
-            </div>
         </div>
         <div class="row">
-            <div class="col-md-3 col-sm-6 col-xs-12">
-                <button type="submit" class="btn btn-primary">Check</button>
+            <div class="col-xs-12">
+                <button type="submit" class="btn btn-primary">Check the performance for above period</button>
             </div>
         </div>
+        {% if rq %}
+        <h6>&nbsp;</h6>
+        <div class="row">
+            <h4 class="col-xs-12">Or during the past </h4>
+        </div>
+        <div class="row col-xs-12">
+            {% for r in rq %}
+            <span class="btn btn-primary" onclick="ranged_q('{{r.link}}')">{{r.term}}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
     </form>
     <script type="text/javascript">
+    function ranged_q(l) {
+    	ss = $("#ss").val();
+    	if (ss) {
+    		l = l + ss + "/";
+    	}
+    	window.open(l, "_self");
+    }
     $(function () {
         $('#datetimepicker6').datetimepicker({
             viewMode: 'years',

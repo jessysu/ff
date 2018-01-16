@@ -3,7 +3,8 @@ import re, datetime, time, secrets
 from dateutil.relativedelta import relativedelta
 from django.db import connection
 #from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
 def runsql(s):
     cur = connection.cursor()
@@ -34,16 +35,6 @@ def get_rank(r):
 
 def assure_log():
     cur = connection.cursor()
-    if not table_exist("ff_hindsight_log"):
-        cur.execute("create table ff_hindsight_log (request_dt datetime, requester_ip varchar(45), ds varchar(8), de varchar(8), symbol varchar(10))")
-        cur.execute("create index ff_hindsight_log_i1 on ff_hindsight_log (request_dt)")
-        cur.execute("create index ff_hindsight_log_i2 on ff_hindsight_log (symbol)")
-        cur.execute("create index ff_hindsight_log_i3 on ff_hindsight_log (requester_ip)")
-    if not table_exist("ff_hindsight_dlog"):
-        cur.execute("create table ff_hindsight_dlog (request_dt datetime, requester_ip varchar(45), ds date, de date, symbol varchar(10))")
-        cur.execute("create index ff_hindsight_dlog_i1 on ff_hindsight_dlog (request_dt)")
-        cur.execute("create index ff_hindsight_dlog_i2 on ff_hindsight_dlog (symbol)")
-        cur.execute("create index ff_hindsight_dlog_i3 on ff_hindsight_dlog (requester_ip)")
     if not table_exist("ff_hindsight_request_log"):
         cur.execute("create table ff_hindsight_request_log ( \
                         request_dt datetime, \
@@ -83,11 +74,25 @@ def log_ff_hindsight_request(request, ld="", ds="", de="", ss=""):
                  ss))
     return
 
+
+def generate_ranged_query():
+    cdt = datetime.datetime.now() - datetime.timedelta(hours=19)
+    rq = []
+    rq.append({"term": "5 years", "link":"/hsm/"+(cdt-relativedelta(years=5)).strftime("%m/%Y/")+cdt.strftime("%m/%Y/")})
+    rq.append({"term": "3 years", "link":"/hsm/"+(cdt-relativedelta(years=3)).strftime("%m/%Y/")+cdt.strftime("%m/%Y/")})
+    rq.append({"term": "1 year", "link":"/hsm/"+(cdt-relativedelta(years=1)).strftime("%m/%Y/")+cdt.strftime("%m/%Y/")})
+    rq.append({"term": "6 months", "link":"/hsd/"+(cdt-relativedelta(months=6)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
+    rq.append({"term": "3 months", "link":"/hsd/"+(cdt-relativedelta(months=3)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
+    rq.append({"term": "1 month", "link":"/hsd/"+(cdt-relativedelta(months=1)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
+    rq.append({"term": "2 weeks", "link":"/hsd/"+(cdt-relativedelta(days=14)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
+    rq.append({"term": "1 week", "link":"/hsd/"+(cdt-relativedelta(days=7)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
+    return rq
+
 SP500 = runsql("select symbol from ff_scan_symbols where datediff(now(),last_updated) < 60")
 SP500 = [i['symbol'] for i in SP500]
 
 def index(request):
-    return hindsight_monthly(request)
+    return redirect("/hsd/")
     
 def hindsight_monthly(request, ds="", de="", ss=""):
     if not ds:
@@ -103,30 +108,33 @@ def hindsight_monthly(request, ds="", de="", ss=""):
             maxD -= datetime.timedelta(days=1)
     hard_min = datetime.datetime.now() - relativedelta(years=10)
     hard_max = datetime.datetime.now() - relativedelta(years=5)
-    rs = {"SminD":hard_min.strftime("%m/%Y"), "EminD":hard_min.strftime("%m/%Y"), "SmaxD":maxD.strftime("%m/%Y"), "EmaxD":maxD.strftime("%m/%Y"), "SP500":SP500}
+    SminD = hard_min.strftime("%m/%Y")
+    EminD = hard_min.strftime("%m/%Y") 
+    SmaxD = maxD.strftime("%m/%Y")
+    EmaxD = maxD.strftime("%m/%Y")
 
     r = re.compile('\d{2}/\d{4}')
     if not ds or not r.match(ds):
         random_years = secrets.choice(list(range(1,11)))
         ds = (datetime.datetime.now() - relativedelta(years=random_years)).strftime("%m/%Y")
+        messages.warning(request, 'Showing the top stock symbols during the last <strong>'+str(random_years)+'</strong> years.')
     if not de or not r.match(de):
         de = (datetime.datetime.now() - datetime.timedelta(hours=19)).strftime("%m/%Y")
     if len(ss) > 5:
         ss = ""
-#    if not ds or not de or not ss or len(ss)>5:
-#        print("lacks info")
-#        return render(request, 'hindsight_monthly.html', rs)
-#    if not r.match(ds) or not r.match(de):
-#        print("wrong month")
-#        return render(request, 'hindsight_monthly.html', rs)
+    if datetime.datetime.strptime(de,"%m/%Y") > maxD :
+        de = maxD.strftime("%m/%Y")
+        messages.warning(request, 'Showing the top stocks up to current time only.')
     if datetime.datetime.strptime(ds,"%m/%Y") < hard_min :
         ds = hard_min.strftime("%m/%Y")
+        messages.warning(request, 'Showing the top stock symbols during the last <strong>10</strong> years only.')
     if datetime.datetime.strptime(de,"%m/%Y") < hard_max :
         de = hard_max.strftime("%m/%Y")
+        messages.warning(request, 'The end date needs to be within the last <strong>5</strong> years. Fixed.')
     while not runsql("select count(1) cnt from ff_stock_w2 where close_month='"+(datetime.datetime.strptime(de,"%m/%Y")).strftime("%Y%m")+"'")[0]['cnt']:
         de = (datetime.datetime.strptime(de,"%m/%Y") - relativedelta(months=1)).strftime("%m/%Y")
-    rs['EminD'] = ds
-    rs['SmaxD'] = de
+    EminD = ds
+    SmaxD = de
     _ds = ds.replace('/','')
     _ds = _ds[2:] + _ds[:2]
     _de = de.replace('/','')
@@ -134,13 +142,6 @@ def hindsight_monthly(request, ds="", de="", ss=""):
     es = datetime.datetime.strptime(ds,"%m/%Y")
     ee = datetime.datetime.strptime(de,"%m/%Y")
     sy = es.year == ee.year
-    rs__ = {"es":es, "ee":ee, "sy": sy}
-    
-#    rawsql = "select count(1) cnt from ff_stock_w3 where start_month='"+_ds+"' and end_month='"+_de+"' and symbol='"+ss+"'"
-#    s = runsql(rawsql)
-#    if not s[0]['cnt']:
-#        print("no symbol")
-#        return render(request, 'hindsight_monthly.html', rs)
     
     log_ff_hindsight_request(request, ld="/hsm/", ds=es, de=ee, ss=ss)
 
@@ -162,8 +163,13 @@ def hindsight_monthly(request, ds="", de="", ss=""):
     symbol_line = runsql(rawsql)
     for s in symbol_line:
         s['close_date'] = 1000*time.mktime(s['close_date'].timetuple())
-    rs_ = {"ds": ds, "de": de, "ss": ss, "symbol_list": symbol_list, "symbol_line": symbol_line, "pr":pr}
-    return render(request, 'hindsight_monthly.html', {**rs,**rs_,**rs__})
+    rs = {"SminD": SminD, "EminD": EminD, "SmaxD": SmaxD, "EmaxD": EmaxD,
+          "es": es, "ee": ee, "sy": sy,
+          "ds": ds, "de": de, "ss": ss, 
+          "symbol_list": symbol_list, "symbol_line": symbol_line, 
+          "pr": pr, "SP500": SP500, "rq": generate_ranged_query()
+          }
+    return render(request, 'hindsight_monthly.html', rs)
     
 
 
@@ -187,43 +193,44 @@ def hindsight_daily(request, ds="", de="", ss=""):
             minD += datetime.timedelta(days=1)
     hard_min = datetime.datetime.now() - relativedelta(months=7)
     hard_max = datetime.datetime.now() - relativedelta(months=6)
-    rs = {"SminD":minD.strftime("%m/%d/%Y"), "EminD":minD.strftime("%m/%d/%Y"), "SmaxD":maxD.strftime("%m/%d/%Y"), "EmaxD":maxD.strftime("%m/%d/%Y"), "SP500":SP500}
+    SminD = minD.strftime("%m/%d/%Y")
+    EminD = minD.strftime("%m/%d/%Y")
+    SmaxD = maxD.strftime("%m/%d/%Y")
+    EmaxD = maxD.strftime("%m/%d/%Y")
     
     r = re.compile('\d{2}/\d{2}/\d{4}')
     if not de or not r.match(de):
         de = (datetime.datetime.now() - datetime.timedelta(hours=19)).strftime("%m/%d/%Y")
     if datetime.datetime.strptime(de,"%m/%d/%Y") < hard_max :
         de = hard_max.strftime("%m/%d/%Y")
+        messages.warning(request, 'The end date needs to be within the last <strong>6</strong> months. Fixed.')
+    if datetime.datetime.strptime(de,"%m/%d/%Y") > maxD :
+        de = maxD.strftime("%m/%d/%Y")
+        messages.warning(request, 'Showing the top stocks up to current time only.')
     if not ds or not r.match(ds):
         daydiff = ((datetime.datetime.now()- datetime.timedelta(hours=19)) - datetime.datetime.strptime(de,"%m/%d/%Y")).days
         choices = [i for i in [7,14,21,30,60,90,120,180,210] if i>=daydiff]
         random_days = secrets.choice(choices)
         ds = (datetime.datetime.now() - relativedelta(days=random_days)).strftime("%m/%d/%Y")
     if datetime.datetime.strptime(ds,"%m/%d/%Y") < hard_min :
-        ds = hard_min.strftime("%m/%d/%Y")
+        ds = (datetime.datetime.strptime(ds,"%m/%d/%Y")).strftime("%m/%Y")
+        de = (datetime.datetime.strptime(de,"%m/%d/%Y")).strftime("%m/%Y")
+        messages.warning(request, 'Please correct the error below.')
+        return redirect("/hsm/"+ds.replace("/","%2F")+"/"+de.replace("/","%2F")+"/"+(ss+"/" if ss else ""))
+        #return hindsight_monthly(request, ds=ds, de=de, ss=ss)
+        #ds = hard_min.strftime("%m/%d/%Y")
     if len(ss) > 5:
         ss = ""
     while not runsql("select count(1) cnt from ff_stock_w4 where close_date='"+(datetime.datetime.strptime(ds,"%m/%d/%Y")).strftime("%Y-%m-%d")+"'")[0]['cnt']:
         ds = (datetime.datetime.strptime(ds,"%m/%d/%Y") + relativedelta(days=1)).strftime("%m/%d/%Y")
     while not runsql("select count(1) cnt from ff_stock_w4 where close_date='"+(datetime.datetime.strptime(de,"%m/%d/%Y")).strftime("%Y-%m-%d")+"'")[0]['cnt']:
         de = (datetime.datetime.strptime(de,"%m/%d/%Y") - relativedelta(days=1)).strftime("%m/%d/%Y")
-#    if not ds or not de or not ss or len(ss)>5:
-#        print("lacks daily info")
-#        return render(request, 'hindsight_daily.html', rs)
-#    if not r.match(ds) or not r.match(de):
-#        print("wrong date")
-#        return render(request, 'hindsight_daily.html', rs)
-    rs['EminD'] = ds
-    rs['SmaxD'] = de
+    EminD = ds
+    SmaxD = de
     _ds = ds.replace('/','-')
     _ds = _ds[6:] + "-" + _ds[:5]
     _de = de.replace('/','-')
     _de = _de[6:] + "-" + _de[:5]
-#    rawsql = "select count(1) cnt from ff_stock_w5 where start_date='"+_ds+"' and end_date='"+_de+"' and symbol='"+ss+"'"
-#    s = runsql(rawsql)
-#    if not s[0]['cnt']:
-#        print("no symbol")
-#        return render(request, 'hindsight_daily.html', rs)
     
     log_ff_hindsight_request(request, ld="/hsd/", ds=datetime.datetime.strptime(ds,"%m/%d/%Y"), de=datetime.datetime.strptime(de,"%m/%d/%Y"), ss=ss)
 
@@ -245,8 +252,12 @@ def hindsight_daily(request, ds="", de="", ss=""):
     symbol_line = runsql(rawsql)
     for s in symbol_line:
         s['close_date'] = 1000*time.mktime(s['close_date'].timetuple())
-    rs_ = {"ds": ds, "de": de, "ss": ss, "symbol_list": symbol_list, "symbol_line": symbol_line, "pr":pr}
-    return render(request, 'hindsight_daily.html', {**rs,**rs_})
+    rs = {"SminD":SminD, "EminD":EminD, "SmaxD":SmaxD, "EmaxD":EmaxD,
+          "ds": ds, "de": de, "ss": ss, 
+          "symbol_list": symbol_list, "symbol_line": symbol_line, 
+          "pr":pr, "SP500":SP500, "rq": generate_ranged_query()
+          }
+    return render(request, 'hindsight_daily.html', rs)
 
 
 
