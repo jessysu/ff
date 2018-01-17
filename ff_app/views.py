@@ -78,14 +78,14 @@ def log_ff_hindsight_request(request, ld="", ds="", de="", ss=""):
 def generate_ranged_query():
     cdt = datetime.datetime.now() - datetime.timedelta(hours=19)
     rq = []
-    rq.append({"term": "5 years", "link":"/hsm/"+(cdt-relativedelta(years=5)).strftime("%m/%Y/")+cdt.strftime("%m/%Y/")})
-    rq.append({"term": "3 years", "link":"/hsm/"+(cdt-relativedelta(years=3)).strftime("%m/%Y/")+cdt.strftime("%m/%Y/")})
-    rq.append({"term": "1 year", "link":"/hsm/"+(cdt-relativedelta(years=1)).strftime("%m/%Y/")+cdt.strftime("%m/%Y/")})
-    rq.append({"term": "6 months", "link":"/hsd/"+(cdt-relativedelta(months=6)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
-    rq.append({"term": "3 months", "link":"/hsd/"+(cdt-relativedelta(months=3)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
-    rq.append({"term": "1 month", "link":"/hsd/"+(cdt-relativedelta(months=1)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
-    rq.append({"term": "2 weeks", "link":"/hsd/"+(cdt-relativedelta(days=14)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
-    rq.append({"term": "1 week", "link":"/hsd/"+(cdt-relativedelta(days=7)).strftime("%m/%d/%Y/")+cdt.strftime("%m/%d/%Y/")})
+    rq.append({"term": "5 years", "link":"/hsm/?ds="+(cdt-relativedelta(years=5)).strftime("%m/%Y&de=")+cdt.strftime("%m/%Y&ss=")})
+    rq.append({"term": "3 years", "link":"/hsm/?ds="+(cdt-relativedelta(years=3)).strftime("%m/%Y&de=")+cdt.strftime("%m/%Y&ss=")})
+    rq.append({"term": "1 year", "link":"/hsm/?ds="+(cdt-relativedelta(years=1)).strftime("%m/%Y&de=")+cdt.strftime("%m/%Y&ss=")})
+    rq.append({"term": "6 months", "link":"/hsd/?ds="+(cdt-relativedelta(months=6)).strftime("%m/%d/%Y&de=")+cdt.strftime("%m/%d/%Y&ss=")})
+    rq.append({"term": "3 months", "link":"/hsd/?ds="+(cdt-relativedelta(months=3)).strftime("%m/%d/%Y&de=")+cdt.strftime("%m/%d/%Y&ss=")})
+    rq.append({"term": "1 month", "link":"/hsd/?ds="+(cdt-relativedelta(months=1)).strftime("%m/%d/%Y&de=")+cdt.strftime("%m/%d/%Y&ss=")})
+    rq.append({"term": "2 weeks", "link":"/hsd/?ds="+(cdt-relativedelta(days=14)).strftime("%m/%d/%Y&de=")+cdt.strftime("%m/%d/%Y&ss=")})
+    rq.append({"term": "1 week", "link":"/hsd/?ds="+(cdt-relativedelta(days=7)).strftime("%m/%d/%Y&de=")+cdt.strftime("%m/%d/%Y&ss=")})
     return rq
 
 SP500 = runsql("select symbol from ff_scan_symbols where datediff(now(),last_updated) < 60")
@@ -93,8 +93,14 @@ SP500 = [i['symbol'] for i in SP500]
 
 def index(request):
     return redirect("/hsd/")
+
+def about(request):
+    return render(request, 'about.html', {})
+
+
     
 def hindsight_monthly(request, ds="", de="", ss=""):
+    to_be_redir = False
     if not ds:
         ds = request.GET.get('ds', '')
     if not de:
@@ -115,24 +121,33 @@ def hindsight_monthly(request, ds="", de="", ss=""):
 
     r = re.compile('\d{2}/\d{4}')
     if not ds or not r.match(ds):
-        random_years = secrets.choice(list(range(1,11)))
+        to_be_redir = True
+        random_years = secrets.choice(list(range(1,6)))
         ds = (datetime.datetime.now() - relativedelta(years=random_years)).strftime("%m/%Y")
         messages.warning(request, 'Showing the top stock symbols during the last <strong>'+str(random_years)+'</strong> years.')
     if not de or not r.match(de):
+        to_be_redir = True
         de = (datetime.datetime.now() - datetime.timedelta(hours=19)).strftime("%m/%Y")
     if len(ss) > 5:
+        to_be_redir = True
         ss = ""
     if datetime.datetime.strptime(de,"%m/%Y") > maxD :
+        to_be_redir = True
         de = maxD.strftime("%m/%Y")
         messages.warning(request, 'Showing the top stocks up to current time only.')
     if datetime.datetime.strptime(ds,"%m/%Y") < hard_min :
+        to_be_redir = True
         ds = hard_min.strftime("%m/%Y")
         messages.warning(request, 'Showing the top stock symbols during the last <strong>10</strong> years only.')
     if datetime.datetime.strptime(de,"%m/%Y") < hard_max :
+        to_be_redir = True
         de = hard_max.strftime("%m/%Y")
         messages.warning(request, 'The end date needs to be within the last <strong>5</strong> years. Fixed.')
     while not runsql("select count(1) cnt from ff_stock_w2 where close_month='"+(datetime.datetime.strptime(de,"%m/%Y")).strftime("%Y%m")+"'")[0]['cnt']:
+        to_be_redir = True
         de = (datetime.datetime.strptime(de,"%m/%Y") - relativedelta(months=1)).strftime("%m/%Y")
+    if to_be_redir:
+        return redirect("/hsm/?ds="+ds.replace("/","%2F")+"&de="+de.replace("/","%2F")+"&ss="+ss)
     EminD = ds
     SmaxD = de
     _ds = ds.replace('/','')
@@ -175,6 +190,7 @@ def hindsight_monthly(request, ds="", de="", ss=""):
 
 
 def hindsight_daily(request, ds="", de="", ss=""):
+    to_be_redir = False
     if not ds:
         ds = request.GET.get('ds', '')
     if not de:
@@ -200,14 +216,18 @@ def hindsight_daily(request, ds="", de="", ss=""):
     
     r = re.compile('\d{2}/\d{2}/\d{4}')
     if not de or not r.match(de):
+        to_be_redir = True
         de = (datetime.datetime.now() - datetime.timedelta(hours=19)).strftime("%m/%d/%Y")
     if datetime.datetime.strptime(de,"%m/%d/%Y") < hard_max :
+        to_be_redir = True
         de = hard_max.strftime("%m/%d/%Y")
         messages.warning(request, 'The end date needs to be within the last <strong>6</strong> months. Fixed.')
     if datetime.datetime.strptime(de,"%m/%d/%Y") > maxD :
+        to_be_redir = True
         de = maxD.strftime("%m/%d/%Y")
         messages.warning(request, 'Showing the top stocks up to current time only.')
     if not ds or not r.match(ds):
+        to_be_redir = True
         daydiff = ((datetime.datetime.now()- datetime.timedelta(hours=19)) - datetime.datetime.strptime(de,"%m/%d/%Y")).days
         choices = [i for i in [7,14,21,30,60,90,120,180,210] if i>=daydiff]
         random_days = secrets.choice(choices)
@@ -215,16 +235,19 @@ def hindsight_daily(request, ds="", de="", ss=""):
     if datetime.datetime.strptime(ds,"%m/%d/%Y") < hard_min :
         ds = (datetime.datetime.strptime(ds,"%m/%d/%Y")).strftime("%m/%Y")
         de = (datetime.datetime.strptime(de,"%m/%d/%Y")).strftime("%m/%Y")
-        messages.warning(request, 'Please correct the error below.')
-        return redirect("/hsm/"+ds.replace("/","%2F")+"/"+de.replace("/","%2F")+"/"+(ss+"/" if ss else ""))
-        #return hindsight_monthly(request, ds=ds, de=de, ss=ss)
-        #ds = hard_min.strftime("%m/%d/%Y")
+        messages.warning(request, 'Changed to monthly resolution for period longer than 6 months.')
+        return redirect("/hsm/?ds="+ds.replace("/","%2F")+"&de="+de.replace("/","%2F")+"&ss="+ss)
     if len(ss) > 5:
+        to_be_redir = True
         ss = ""
     while not runsql("select count(1) cnt from ff_stock_w4 where close_date='"+(datetime.datetime.strptime(ds,"%m/%d/%Y")).strftime("%Y-%m-%d")+"'")[0]['cnt']:
+        to_be_redir = True
         ds = (datetime.datetime.strptime(ds,"%m/%d/%Y") + relativedelta(days=1)).strftime("%m/%d/%Y")
     while not runsql("select count(1) cnt from ff_stock_w4 where close_date='"+(datetime.datetime.strptime(de,"%m/%d/%Y")).strftime("%Y-%m-%d")+"'")[0]['cnt']:
+        to_be_redir = True
         de = (datetime.datetime.strptime(de,"%m/%d/%Y") - relativedelta(days=1)).strftime("%m/%d/%Y")
+    if to_be_redir:
+        return redirect("/hsd/?ds="+ds.replace("/","%2F")+"&de="+de.replace("/","%2F")+"&ss="+ss)
     EminD = ds
     SmaxD = de
     _ds = ds.replace('/','-')

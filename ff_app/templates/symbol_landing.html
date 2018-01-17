@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load staticfiles %}
 
+{% block title %}Bestever - FolioFame{% endblock %}
 
 {% block header %}
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.css">
@@ -16,7 +17,7 @@
 {% block body %}
 
 <div class="container">
-    <h1>Hindsight <img src="{% static 'img/hindsight.ico' %}" style="height:30px;width:auto"> <small><small>Best from the Past&trade;</small></small></h1>
+    <h1>Bestever<i class="fa fa-beer fa-fw" aria-hidden="true" style="color:#0084ff"></i> <small><small>Best from the Past&trade;</small></small></h1>
 
     <h1>&nbsp;</h1>
     <div class="pull-right col-xs-4 col-sm-3">
@@ -96,7 +97,7 @@ nv.addGraph(function() {
       .tickFormat(function(d){return d3.time.format('%m/%d/%Y')(new Date(d))});
 
     chart.y1Axis.tickFormat(d3.format(',f'));
-    chart.y2Axis.tickFormat(function(d) { return '$' + d3.format(',f')(d) });
+    chart.y2Axis.tickFormat(function(d) { return '$' + d3.format('.2f')(d) });
     chart.bars.forceY([0]);
 
     d3.select('#sline svg')

@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
 
+{% block title %}Hindsight Monthly - FolioFame{% endblock %}
 
 {% block header %}
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.css">
@@ -17,7 +19,7 @@
 {% regroup symbol_line|dictsort:"rn" by rn as line_list %}
 
 <div class="container">
-    <h1>Hindsight <small><small>Best from the Past&trade;</small></small></h1>
+    <h1>Hindsight <img src="{% static 'img/hindsight.ico' %}" style="height:30px;width:auto"> <small><small>Best from the Past&trade;</small></small></h1>
     <h5>Check monthly stock performance for the past 10 years!</h5>
     <h5>Or <a href="/hsd/">try daily</a>.</h5>
 
@@ -125,18 +127,14 @@
         </div>
         <div class="row col-xs-12">
             {% for r in rq %}
-            <span class="btn btn-primary" onclick="ranged_q('{{r.link}}')">{{r.term}}</span>
+            <span class="btn btn-primary mt5" onclick="ranged_q('{{r.link}}')">{{r.term}}</span>
             {% endfor %}
         </div>
         {% endif %}
     </form>
     <script type="text/javascript">
     function ranged_q(l) {
-    	ss = $("#ss").val();
-    	if (ss) {
-    		l = l + ss + "/";
-    	}
-    	window.open(l, "_self");
+        window.open(l + $("#ss").val(), "_self");
     }
     $(function () {
         $('#datetimepicker6').datetimepicker({
@@ -177,6 +175,7 @@
     <h1>&nbsp;</h1>
     <h1>&nbsp;</h1>
 
+    <h2>Gain (%) Movement</h2>
     <div id="sline" style="height:480px;width:80%;min-width:480px">
         <svg></svg>
     </div>

@@ -2,13 +2,27 @@
 <nav class="navbar navbar-inverse">
   <div class="container-fluid">
     <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
       <a class="navbar-brand pull-left" style="padding:0px">
           <img src="{% static 'img/favicon_b.png' %}" style="height:100%;padding:10px;width:auto"></a>
       <a class="navbar-brand" href="/">FolioFame</a>
     </div>
-    <ul class="nav navbar-nav">
-      <li><a href="/"><img src="{% static 'img/hindsight.ico' %}" style="height:14px"> Hindsight</a></li>
-      <li><a href="/"><i class="fa fa-address-book-o" aria-hidden="true" style="color:#0084ff"></i> About</a></li>
-    </ul>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li {% if request.resolver_match.url_name == 'hindsight_monthly' or request.resolver_match.url_name == 'hindsight_daily' %}class="active"{% endif %}>
+          <a href="/">&nbsp;<img src="{% static 'img/hindsight.ico' %}" style="height:13px"> Hindsight</a>
+        </li>
+        <li {% if request.resolver_match.url_name == 'bestever' %}class="active"{% endif %}>
+          <a href="/"><i class="fa fa-beer fa-fw" aria-hidden="true" style="color:#0084ff"></i> Bestever</a>
+        </li>
+        <li {% if request.resolver_match.url_name == 'about' %}class="active"{% endif %}>
+          <a href="/about/"><i class="fa fa-address-book-o fa-fw" aria-hidden="true" style="color:#0084ff"></i> About</a>
+        </li>
+      </ul>
+    </div>
   </div>
 </nav>
