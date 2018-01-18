@@ -45,7 +45,6 @@
         and <u>{{ee|date:"F Y"}}</u>{%endif%}, 
         the performance of <b>{{ss}}</b> was ranked
     </p>
-    <h1>&nbsp;</h1>
 {% endif %}
 
     {% include "ranking_exp.html" %}
@@ -55,7 +54,8 @@
         and <u>{{ee|date:"F Y"}}</u>{%endif%}:
     </p>
     <h3>&nbsp;</h3>
-    <table class="table table-hover" style="margin-bottom:100px">
+    <div class="table-responsive">
+    <table class="table table-hover" style="padding-bottom:100px">
         <thead>
             <tr>
                 <th>Rank</th>
@@ -77,23 +77,21 @@
         {% endfor %}
         </tbody>
     </table>
+    </div>
     <h1>&nbsp;</h1>
     {% if pr %}
-    <h2>Try some more?</h2>
+    <h3>Some more?</h3>
     {% else %}
-    <h2>Looking for performance of a stock symbol? Which one?</h2>
+    <h3>Looking for performance of a stock symbol? Which one?</h3>
     {% endif %}
 
-    <h1>&nbsp;</h1>
+    <h5>&nbsp;</h5>
     <form action="/hsm/" method="get">
         <div class="row">
             <div class="form-group col-md-3 col-sm-6 col-xs-12">
                 <label for="ss">Which SP500 stock (optional)</label>
                 <input type='text' class="form-control typeahead" autocomplete="off" name="ss" id="ss" data-provide="typeahead" {%if ss%}value="{{ss}}"{%else%}placeholder="SYMBOL"{%endif%} onfocus="this.setSelectionRange(0, this.value.length)"/>
             </div>
-        </div>
-        <div class="row">
-            <h4 class="col-xs-12">During the period </h4>
         </div>
         <div class="row">
             <div class="form-group col-md-3 col-sm-6 col-xs-12">
@@ -123,7 +121,7 @@
         {% if rq %}
         <h6>&nbsp;</h6>
         <div class="row">
-            <h4 class="col-xs-12">Or during the past </h4>
+            <p class="col-xs-12"><b>Or during the past </b></p>
         </div>
         <div class="row col-xs-12">
             {% for r in rq %}
@@ -175,9 +173,11 @@
     <h1>&nbsp;</h1>
     <h1>&nbsp;</h1>
 
-    <h2>Gain (%) Movement</h2>
-    <div id="sline" style="height:480px;width:80%;min-width:480px">
-        <svg></svg>
+    <h3>Gain movement in percentage (%)</h3>
+    <div class="table-responsive">
+        <div id="sline" style="height:480px;width:80%;min-width:480px">
+            <svg></svg>
+        </div>
     </div>
 <script>
 nv.addGraph(function() {

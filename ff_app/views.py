@@ -285,15 +285,16 @@ def hindsight_daily(request, ds="", de="", ss=""):
 
 
 def symbol_landing(request, ss="", d="180"):
-    if len(ss)>5:
-        print("symbol too long")
-        return render(request, 'hindsight_daily.html', {})
+    if not ss or len(ss)>5:
+        messages.warning(request, 'Invalid stock symbol.')
+        return redirect("/hsd/")
     ss = ss.upper()
     
     if d.isdigit():
         d = int(d)
-        if d > 1826:
-            d = 1826
+        if d > 365:
+            messages.warning(request, 'Only showing quotes for up to the past 365 days.')
+            return redirect("/sym/"+ss+"/365/")
     else:
         d = 180
     ds = datetime.datetime.now() - datetime.timedelta(days=d)
@@ -309,17 +310,21 @@ def symbol_landing(request, ss="", d="180"):
     rawsql = "select close_date, high, low, close, volume from ff_stock where symbol='"+ss+"' and close_date>'"+ds.strftime("%Y-%m-%d")+"'"
     symbol_line = runsql(rawsql)
     if len(symbol_line) == 0:
-        print("no such symbol in system")
-        return render(request, 'hindsight_daily.html', {})
+        messages.warning(request, 'No data for the stock symbol <b>'+ss+'</b>')
+        return redirect("/hsd/")
+    while not runsql("select count(1) cnt from ff_stock_w4 where close_date='"+ds.strftime("%Y-%m-%d")+"'")[0]['cnt']:
+        ds += relativedelta(days=1)
+    while not runsql("select count(1) cnt from ff_stock_w4 where close_date='"+de.strftime("%Y-%m-%d")+"'")[0]['cnt']:
+        de -= relativedelta(days=1)
     for s in symbol_line:
         s['close_date'] = 1000*time.mktime(s['close_date'].timetuple())
 
     if d < 210:
-        rawsql = "select a.*, security, sector from ( \
+        rawsql = "select a.*, security, sector, subsec, hq from ( \
                   select rn+1 rn, symbol, round(c_diff*100) c_diff from ff_stock_w5 where start_date='"+ds.strftime("%Y-%m-%d")+"' and end_date='"+de.strftime("%Y-%m-%d")+"' and symbol='"+ss+"' \
                   ) a, ff_scan_symbols b where a.symbol=b.symbol order by rn"
     else:
-        rawsql = "select a.*, security, sector from ( \
+        rawsql = "select a.*, security, sector, subsec, hq from ( \
                   select rn+1 rn, symbol, round(c_diff*100) c_diff from ff_stock_w3 where start_month='"+ds.strftime("%Y%m")+"' and end_month='"+de.strftime("%Y%m")+"' and symbol='"+ss+"' \
                   ) a, ff_scan_symbols b where a.symbol=b.symbol order by rn"
     symbol_desc = runsql(rawsql)

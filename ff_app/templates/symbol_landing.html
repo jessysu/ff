@@ -17,7 +17,17 @@
 {% block body %}
 
 <div class="container">
-    <h1>Bestever<i class="fa fa-beer fa-fw" aria-hidden="true" style="color:#0084ff"></i> <small><small>Best from the Past&trade;</small></small></h1>
+    <h2>Bestever<i class="fa fa-beer fa-fw" aria-hidden="true" style="color:#0084ff"></i> <small><small>Best from the Past&trade;</small></small></h2>
+
+{% if messages %}
+    <h1>&nbsp;</h1>
+    {% for message in messages %}
+    <div class="alert alert-warning alert-dismissable">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        {{message|safe}}
+    </div>
+    {% endfor %}
+{% endif %}
 
     <h1>&nbsp;</h1>
     <div class="pull-right col-xs-4 col-sm-3">
@@ -25,21 +35,26 @@
             <div class="panel-heading" style="text-align:center">{{symbol_desc.pr}}</div>
         </h1>
     </div>
-    <h4 style="padding-top:30px">During the past <u>{{d}}</u> days, the performance of <b>{{ss}}</b> was ranked</h4>
-    <h1>&nbsp;</h1>
+    <p style="padding-top:30px">
+        {{symbol_desc.security}} (<b>{{symbol_desc.symbol}}</b>) is a {{symbol_desc.subsec|lower}} provider, 
+        headquartered in {{symbol_desc.hq}}. 
+        During the past <u>{{d}}</u> days, the performance of <b>{{ss}}</b> was ranked
+    </p>
+    {% include "ranking_exp.html" %}
+
     <h3>&nbsp;</h3>
 
     <h4>Best time to own <b>{{ss}}</b> shares</h4>
     <h6>&nbsp;</h6>
     {% for r in best_times %}
-    <h5>
+    <p>
         The best performance by <b>{{ss}}</b> for a period of
         <b>{{r.best_val}}+ {%if r.best_unit == 'm'%}month{%else%}day{%endif%}s</b> was between 
         {%if r.best_unit == 'm'%}<i>{%if r.same_year%}{{r.start|date:"F"}}{%else%}{{r.start|date:"F Y"}}{%endif%}</i> and <i>{{r.end|date:"F Y"}}</i>{%else%}  
         <i>{%if r.same_year%}{{r.start|date:"N d"}}{%else%}{{r.start|date:"N d, Y"}}{%endif%}</i> and <i>{{r.end|date:"N d, Y"}}</i>{%endif%}.
         During such period, the <b>{{ss}}</b> shares returned <b>{{r.c_diff}}%</b>  
         and was ranked <span class="btn btn-xs btn-info">{{r.pr}}</span> among the S&P500 stocks.
-    </h5>
+    </p>
     <div class="btn btn-sm btn-primary">Best stocks during 
         {%if r.best_unit == 'm'%}<i>{%if r.same_year%}{{r.start|date:"F"}}{%else%}{{r.start|date:"F Y"}}{%endif%}</i> and <i>{{r.end|date:"F Y"}}</i>{%else%}  
         <i>{%if r.same_year%}{{r.start|date:"N d"}}{%else%}{{r.start|date:"N d, Y"}}{%endif%}</i> and <i>{{r.end|date:"N d, Y"}}</i>{%endif%}.
@@ -48,15 +63,18 @@
     {% endfor %}
     
     <h3>&nbsp;</h3>
-    <div id="sline" style="height:480px;width:80%;min-width:480px">
-        <svg></svg>
+    <div class="table-responsive">
+        <div id="sline" style="height:480px;width:80%;min-width:480px">
+            <svg></svg>
+        </div>
     </div>
     <h1>&nbsp;</h1>
     <h1>&nbsp;</h1>
 
     <h4>Best performances by <b>{{ss}}</b></h4>
     <h6>&nbsp;</h6>
-    <table class="table table-hover" style="margin-bottom:100px">
+    <div class="table-responsive">
+    <table class="table table-hover" style="padding-bottom:100px">
         <thead>
             <tr>
                 <th>In the past</th>
@@ -79,6 +97,7 @@
         {% endfor %}
         </tbody>
     </table>
+    </div>
 
     <h1>&nbsp;</h1>
     <h1>&nbsp;</h1>
