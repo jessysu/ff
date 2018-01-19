@@ -135,7 +135,7 @@ def hindsight_monthly(request, ds="", de="", ss=""):
         to_be_redir = True
         de = maxD.strftime("%m/%Y")
         messages.warning(request, 'Showing the top stocks up to current time only.')
-    if datetime.datetime.strptime(ds,"%m/%Y") < hard_min :
+    if datetime.datetime.strptime(ds,"%m/%Y") < datetime.datetime.strptime(hard_min.strftime("%m/%Y"),"%m/%Y") :
         to_be_redir = True
         ds = hard_min.strftime("%m/%Y")
         messages.warning(request, 'Showing the top stock symbols during the last <strong>10</strong> years only.')
