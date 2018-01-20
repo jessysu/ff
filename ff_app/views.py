@@ -5,6 +5,7 @@ from django.db import connection
 #from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from sklearn.datasets.tests.test_covtype import fetch
 
 def runsql(s):
     cur = connection.cursor()
@@ -284,17 +285,28 @@ def hindsight_daily(request, ds="", de="", ss=""):
 
 
 
-def symbol_landing(request, ss="", d="180"):
+def bestever(request, ss="", d="180"):
     if not ss or len(ss)>5:
-        messages.warning(request, 'Invalid stock symbol.')
-        return redirect("/hsd/")
+        if len(ss)>5:
+            messages.warning(request, 'Invalid stock symbol.')
+        ds = (datetime.datetime.now() - relativedelta(days=31)).strftime("%Y-%m-%d")
+        dr = (datetime.datetime.now() - relativedelta(days=22)).strftime("%Y-%m-%d")
+        de = (datetime.datetime.now() - relativedelta(days=4)).strftime("%Y-%m-%d")
+        raw_sql = "select symbol, min(rn) from ff_stock_w5 where start_date>'"+ds+"' and start_date<'"+dr+"' and end_date>'"+de+"' group by symbol having min(rn)<=20 order by rand() limit 1"
+        ss = runsql(raw_sql)[0]
+        if ss:
+            messages.warning(request, 'Showing one of the top performing stock recently: <b>'+ss['symbol']+'</b>')
+            return redirect("/be/"+ss['symbol']+"/30/")
+        else:
+            messages.warning(request, 'Redirected to HindSight.')
+            return redirect("/hsd/")
     ss = ss.upper()
     
     if d.isdigit():
         d = int(d)
         if d > 365:
             messages.warning(request, 'Only showing quotes for up to the past 365 days.')
-            return redirect("/sym/"+ss+"/365/")
+            return redirect("/be/"+ss+"/365/")
     else:
         d = 180
     ds = datetime.datetime.now() - datetime.timedelta(days=d)
@@ -311,7 +323,7 @@ def symbol_landing(request, ss="", d="180"):
     symbol_line = runsql(rawsql)
     if len(symbol_line) == 0:
         messages.warning(request, 'No data for the stock symbol <b>'+ss+'</b>')
-        return redirect("/hsd/")
+        return redirect("/be/")
     while not runsql("select count(1) cnt from ff_stock_w4 where close_date='"+ds.strftime("%Y-%m-%d")+"'")[0]['cnt']:
         ds += relativedelta(days=1)
     while not runsql("select count(1) cnt from ff_stock_w4 where close_date='"+de.strftime("%Y-%m-%d")+"'")[0]['cnt']:
